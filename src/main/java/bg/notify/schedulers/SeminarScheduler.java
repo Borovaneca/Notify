@@ -38,7 +38,7 @@ public class SeminarScheduler {
         this.repository = repository;
     }
 
-    @Scheduled(cron = "0 10 16 * * ?")
+    @Scheduled(cron = "0 0 12 * * ?")
     public void sendDailyMessage() {
         try {
             BufferedReader in = SeminarService.getConnection();
@@ -52,21 +52,20 @@ public class SeminarScheduler {
             Document doc = Jsoup.parse(content.toString());
             Elements seminarElements = doc.select(".events-container-item");
 
-            List<Seminar> seminars = repository.findTop5ByOrderByIdDesc();
+            List<Seminar> seminars = repository.findTop6ByOrderByIdDesc();
 
             for (Element seminarElement : seminarElements) {
                 Seminar seminar = mapToSeminar(seminarElement);
                 if (!seminars.contains(seminar)) {
-                    if (DateChecker.checkDateIfItsBefore(seminar.getDate())) {
-//                        valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
-//                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-//                                    .sendMessage(TextMessages.getSeminarMessage()).queue();
-//
-//                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-//                                    .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(seminar)).queue();
-//                        });
-                        System.out.println(seminar + "is not on the list!");
-//                        repository.save(seminar);
+                    if (DateChecker.checkDateIfItsAfter(seminar.getDate())) {
+                        valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
+                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+                                    .sendMessage(TextMessages.getSeminarMessage()).queue();
+
+                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+                                    .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(seminar)).queue();
+                        });
+                        repository.save(seminar);
                     }
                 }
             }

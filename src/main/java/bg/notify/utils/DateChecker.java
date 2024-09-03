@@ -7,7 +7,7 @@ import java.util.Locale;
 
 public class DateChecker {
 
-    public static boolean checkDateIfItsBefore(String date) {
+    public static boolean checkDateIfItsAfter(String date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", new Locale("bg", "BG"));
         LocalDate seminarDate = null;
         try {

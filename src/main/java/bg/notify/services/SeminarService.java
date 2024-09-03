@@ -20,7 +20,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static bg.notify.constants.Urls.SOFT_UNI_SEMINARS_URL;
 
@@ -54,9 +53,8 @@ public class SeminarService {
             List<Seminar> seminars = new ArrayList<>();
 
             for (Element seminarElement : seminarElements) {
-                if (seminars.size() >= 6) break;
                 Seminar seminar = mapToSeminar(seminarElement);
-                if (DateChecker.checkDateIfItsBefore(seminar.getDate())) {
+                if (DateChecker.checkDateIfItsAfter(seminar.getDate())) {
                     seminars.add(seminar);
                 }
             }

@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface SeminarRepository extends JpaRepository<Seminar, Long> {
 
-    List<Seminar> findTop5ByOrderByIdDesc();
+    List<Seminar> findTop6ByOrderByIdDesc();
 }
