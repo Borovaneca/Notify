@@ -1,5 +1,6 @@
-package bg.mck.sentinel.config;
+package bg.notify.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,4 +13,5 @@ import java.util.Map;
 public class ValuableMaterialsProperties {
 
     private Map<String,String> channels;
+
 }

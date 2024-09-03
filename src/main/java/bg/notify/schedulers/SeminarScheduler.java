@@ -1,11 +1,12 @@
-package bg.mck.sentinel.scheduler;
+package bg.notify.schedulers;
 
-import bg.mck.sentinel.config.ValuableMaterialsProperties;
-import bg.mck.sentinel.entities.Seminar;
-import bg.mck.sentinel.reposotories.SeminarRepository;
-import bg.mck.sentinel.service.SeminarService;
-import bg.mck.sentinel.utils.DateChecker;
-import bg.mck.sentinel.utils.EmbeddedMessages;
+import bg.notify.config.ValuableMaterialsProperties;
+import bg.notify.entities.Seminar;
+import bg.notify.repositories.SeminarRepository;
+import bg.notify.services.SeminarService;
+import bg.notify.utils.DateChecker;
+import bg.notify.utils.EmbeddedMessages;
+import bg.notify.utils.TextMessages;
 import net.dv8tion.jda.api.JDA;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,20 +17,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 
-import static bg.mck.sentinel.constants.Urls.SOFT_UNI_SEMINARS_URL;
-import static bg.mck.sentinel.service.SeminarService.mapToSeminar;
-import static bg.mck.sentinel.utils.TextMessages.getSeminarMessage;
+import static bg.notify.services.SeminarService.mapToSeminar;
+
 
 @Component
 public class SeminarScheduler {
 
     private JDA jda;
+
     private ValuableMaterialsProperties valuableMaterialsChannels;
     private SeminarRepository repository;
 
@@ -40,7 +38,7 @@ public class SeminarScheduler {
         this.repository = repository;
     }
 
-    @Scheduled(cron = "0 12 12 * * ?")
+    @Scheduled(cron = "0 10 16 * * ?")
     public void sendDailyMessage() {
         try {
             BufferedReader in = SeminarService.getConnection();
@@ -60,14 +58,15 @@ public class SeminarScheduler {
                 Seminar seminar = mapToSeminar(seminarElement);
                 if (!seminars.contains(seminar)) {
                     if (DateChecker.checkDateIfItsBefore(seminar.getDate())) {
-                        valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
-                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-                                    .sendMessage(getSeminarMessage()).queue();
-
-                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-                                    .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(seminar)).queue();
-                        });
-                        repository.save(seminar);
+//                        valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
+//                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+//                                    .sendMessage(TextMessages.getSeminarMessage()).queue();
+//
+//                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+//                                    .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(seminar)).queue();
+//                        });
+                        System.out.println(seminar + "is not on the list!");
+//                        repository.save(seminar);
                     }
                 }
             }

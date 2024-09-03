@@ -1,4 +1,4 @@
-package bg.mck.sentinel.utils;
+package bg.notify.utils;
 
 public class TextMessages {
 

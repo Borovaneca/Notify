@@ -1,4 +1,4 @@
-package bg.mck.sentinel.entities;
+package bg.notify.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -99,10 +99,14 @@ public class Seminar {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Seminar seminar = (Seminar) o;
-        return  Objects.equals(title, seminar.title) &&
+        return Objects.equals(title, seminar.title) &&
                 Objects.equals(date, seminar.date) &&
                 Objects.equals(time, seminar.time) &&
                 Objects.equals(lecturers, seminar.lecturers) &&
@@ -118,8 +122,7 @@ public class Seminar {
     @Override
     public String toString() {
         return "Seminar{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
+                "title='" + title + '\'' +
                 ", date='" + date + '\'' +
                 ", time='" + time + '\'' +
                 ", lecturers='" + lecturers + '\'' +
