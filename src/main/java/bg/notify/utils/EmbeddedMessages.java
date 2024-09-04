@@ -216,4 +216,20 @@ public class EmbeddedMessages {
 
         return embedBuilder.build();
     }
+
+    public static MessageEmbed getBotInfoMessage() {
+        EmbedBuilder embed = new EmbedBuilder();
+
+        embed.setTitle("🤖 **Bot Information**")
+                .setDescription("Welcome to the official notification bot! Stay up-to-date with all the latest events and notifications in your server.")
+                .addField("Features", "• 📅 **Event Reminders**\n" +
+                        "• 🔔 **Notification Scheduling**\n" +
+                        "• 📢 **Automated Announcements**", false)
+                .addField("Developed and Maintained by", "👨‍💻 **<@312912204175245333>**", false)
+                .setColor(0x00FF00)  // Green color
+                .setFooter("SoftUni Discord Community!", "https://cdn.discordapp.com/avatars/1280446385061105686/3161a22831ee1f47b11c795d7ada8dba.png")
+                .setThumbnail("https://cdn.discordapp.com/avatars/1280446385061105686/3161a22831ee1f47b11c795d7ada8dba.png");
+
+        return embed.build();
+    }
 }
