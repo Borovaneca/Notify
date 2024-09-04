@@ -46,7 +46,7 @@ public class ExamReminder {
             } else {
                 Guild fundamentals = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.FUNDAMENTALS));
                 Objects.requireNonNull(fundamentals.getTextChannelById(guildProperties.getAnnouncementChannels().get(fundamentals.getId())))
-                        .sendMessageEmbeds(EmbeddedMessages.getExamReminderBasics(exam))
+                        .sendMessageEmbeds(EmbeddedMessages.getExamReminderFundamentals(exam))
                         .queue();
             }
         }

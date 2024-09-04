@@ -2,7 +2,6 @@ package bg.notify.schedulers;
 
 import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
@@ -16,17 +15,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class UserRoleScheduler {
+public class UserRoleReminderScheduler {
 
     private final JDA jda;
 
     @Autowired
-    public UserRoleScheduler(JDA jda) {
+    public UserRoleReminderScheduler(JDA jda) {
         this.jda = jda;
     }
 
 
-    @Scheduled(cron = "0 50 21 * * WED")
+    @Scheduled(cron = "0 0 13 * * SAT")
     public void getRoleMessageSender() {
         jda.getGuilds().forEach(guild -> {
             Role everyoneRole = guild.getPublicRole();
