@@ -10,6 +10,7 @@ import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
 import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -167,10 +168,12 @@ public class ExamListener extends ListenerAdapter {
             String startDateStr = event.getValue("start-date").getAsString();
             String endDateStr = event.getValue("end-date").getAsString();
 
+            Guild guild = event.getGuild();
+
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
             dateFormat.setLenient(false);
-            boolean examIsNotForThisServer = event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS));
-            boolean examIsNotForThisServer2 = event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS));
+            boolean examIsNotForThisServer = guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS));
+            boolean examIsNotForThisServer2 = guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS));
             if (examIsNotForThisServer || examIsNotForThisServer2) {
                 event.reply("Error: " + courseName + " is not a course for this server!").setEphemeral(true).queue();
                 return;
@@ -189,7 +192,7 @@ public class ExamListener extends ListenerAdapter {
                 }
 
                 if (!startDate.before(endDate)) {
-                    if (!event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && startDate.equals(endDate)) {
+                    if (!guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && startDate.equals(endDate)) {
                         event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
                         return;
                     }
@@ -207,6 +210,25 @@ public class ExamListener extends ListenerAdapter {
                 exam.setEndDate(dateFormat.format(endDate));
 
                 examRepository.save(exam);
+
+                if (guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
+                    Optional<Exam> closestUpcomingBasicsExam = examRepository.findClosestUpcomingBasicsExam();
+                    if (closestUpcomingBasicsExam.isPresent()) {
+                        exam = closestUpcomingBasicsExam.get();
+                    }
+                } else if (guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+                    Optional<Exam> closestUpcomingFundamentalsExam = examRepository.findClosestUpcomingFundamentalsExam();
+                    if (closestUpcomingFundamentalsExam.isPresent()) {
+                        exam = closestUpcomingFundamentalsExam.get();
+                    }
+                } else {
+                    Optional<Exam> closestUpcomingTestExams = examRepository.findClosestUpcomingTestExams();
+                    if (closestUpcomingTestExams.isPresent()) {
+                        exam = closestUpcomingTestExams.get();
+                    }
+                }
+
+                EmbeddedMessages.updateManagerMessage(guild, exam, managerStatusRepository, managerProperties);
 
                 event.reply("Success: Exam inserted successfully!").setEphemeral(true).queue();
 
