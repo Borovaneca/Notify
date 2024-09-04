@@ -56,7 +56,7 @@ public class UserRoleReminderScheduler {
 
             for (Member membersWithoutRole : membersWithoutRoles) {
                 membersWithoutRole.getUser().openPrivateChannel()
-                        .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getWelcomeMessage())
+                        .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getMessageForUsersWithoutRoles())
                                 .addActionRow(menu)).queue();
             }
 
