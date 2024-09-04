@@ -40,7 +40,6 @@ public class JDAConfig {
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .setChunkingFilter(ChunkingFilter.ALL)
                 .enableCache(CacheFlag.ONLINE_STATUS);
-
         adapterList.forEach(builder::addEventListeners);
 
         JDA jda = builder.build().awaitReady();
