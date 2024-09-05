@@ -68,12 +68,12 @@ public class WelcomeListener extends ListenerAdapter {
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         if (event.getComponentId().equals("role_select")) {
             String selectedRole = event.getValues().get(0);
-            Guild guild = event.getGuild();
-            Member member = guild.getMemberById(event.getUser().getId());
-
-            if (member != null) {
-                handleRoleAssignment(event, guild, selectedRole);
-            }
+            event.getJDA().getGuilds().forEach(guild -> {
+                Member member = guild.getMemberById(event.getUser().getId());
+                if (member != null) {
+                    handleRoleAssignment(event, guild, selectedRole);
+                }
+            });
         }
     }
 
@@ -83,13 +83,9 @@ public class WelcomeListener extends ListenerAdapter {
         if (role != null) {
             Member member = guild.getMemberById(event.getUser().getId());
 
-            if (member.getRoles().contains(role)) {
-                guild.removeRoleFromMember(member, role).queue();
-                event.reply(role.getName() + " роля беше премахната!").setEphemeral(true).queue();
-            } else {
                 guild.addRoleToMember(member, role).queue();
                 event.reply("Честито! Вие получихте " + role.getName() + " роля!").setEphemeral(true).queue();
-            }
+
         } else {
             event.reply("Извинявам се, но нещо се обърка. Опитайте отново!").setEphemeral(true).queue();
         }
