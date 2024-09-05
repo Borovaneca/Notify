@@ -80,6 +80,7 @@ public class StartExamScheduler {
 
         lockTextCategories(guild, textChannelsIds);
         lockVoiceCategories(guild, voiceCategory);
+
         guild.getTextChannelById(guildProperties.getLogsChannels().get(guild.getId()))
                         .sendMessageEmbeds(EmbeddedMessages.getChannelsClosedLogMessage(exam))
                                 .queue();

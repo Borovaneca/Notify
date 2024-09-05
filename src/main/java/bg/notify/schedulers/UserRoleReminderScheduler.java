@@ -1,5 +1,7 @@
 package bg.notify.schedulers;
 
+import bg.notify.config.GuildProperties;
+import bg.notify.listeners.WelcomeListener;
 import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
@@ -18,47 +20,42 @@ import java.util.stream.Collectors;
 public class UserRoleReminderScheduler {
 
     private final JDA jda;
+    private final GuildProperties guildProperties;
 
     @Autowired
-    public UserRoleReminderScheduler(JDA jda) {
+    public UserRoleReminderScheduler(JDA jda, GuildProperties guildProperties) {
         this.jda = jda;
+        this.guildProperties = guildProperties;
     }
 
 
     @Scheduled(cron = "0 0 13 * * SAT")
     public void getRoleMessageSender() {
         jda.getGuilds().forEach(guild -> {
-            Role everyoneRole = guild.getPublicRole();
+
             List<Member> membersWithoutRoles = guild.getMembers()
                     .stream()
                     .filter(member -> {
                         List<Role> roles = member.getRoles();
                         return roles.isEmpty();
                     })
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (membersWithoutRoles.isEmpty()) return;
 
-            List<SelectOption> options = new ArrayList<>();
-            options.add(SelectOption.of("Java", "java_role"));
-            options.add(SelectOption.of("JavaScript", "javascript_role"));
-            options.add(SelectOption.of("Python", "python_role"));
-            options.add(SelectOption.of("C#", "csharp_role"));
-
-            if (!guild.getName().contains("Fundamentals")) {
-                options.add(SelectOption.of("C++", "cpp_role"));
-            }
+            List<SelectOption> options = WelcomeListener.createSelectOptions(guild.getName(), guildProperties);
 
             StringSelectMenu menu = StringSelectMenu.create("role_select")
                     .setPlaceholder("Select your programming language")
                     .addOptions(options)
                     .build();
 
-            for (Member membersWithoutRole : membersWithoutRoles) {
-                membersWithoutRole.getUser().openPrivateChannel()
-                        .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getMessageForUsersWithoutRoles())
-                                .addActionRow(menu)).queue();
-            }
+            membersWithoutRoles.forEach(member ->
+                    member.getUser().openPrivateChannel()
+                            .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getMessageForUsersWithoutRoles())
+                                    .addActionRow(menu))
+                            .queue()
+            );
 
         });
     }

@@ -122,8 +122,7 @@ public class EndExamScheduler {
         Role everyRole = guild.getPublicRole();
         for (String categoryId : textCategories) {
             guild.getCategoryById(categoryId).getChannels().forEach(channel -> {
-                if (channel instanceof TextChannel) {
-                    TextChannel textChannel = (TextChannel) channel;
+                if (channel instanceof TextChannel textChannel) {
                     textChannel.getManager().removePermissionOverride(everyRole).queue();
                 }
             });
@@ -138,8 +137,7 @@ public class EndExamScheduler {
 
     private void unlockVoiceChannels(Guild guild, String categoryId) {
         guild.getCategoryById(categoryId).getChannels().forEach(channel -> {
-            if (channel instanceof VoiceChannel) {
-                VoiceChannel voiceChannel = (VoiceChannel) channel;
+            if (channel instanceof VoiceChannel voiceChannel) {
                 voiceChannel.getManager().setUserLimit(50).queue();
             }
         });

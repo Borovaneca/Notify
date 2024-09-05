@@ -12,6 +12,7 @@ import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -29,6 +30,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class ExamListener extends ListenerAdapter {
@@ -48,81 +50,78 @@ public class ExamListener extends ListenerAdapter {
 
     @Override
     public void onReady(ReadyEvent event) {
+        ManagerStatus defaultManagerStatus = new ManagerStatus(2L, "null", "null", ChannelStatus.UNLOCKED);
 
-        final Exam[] basicsExamWrapper = new Exam[1];
-        final Exam[] fundamentalsExamWrapper = new Exam[1];
-        final Exam[] testExamWrapper = new Exam[1];
-        final ManagerStatus[] managerStatusWrapper = new ManagerStatus[1];
+        guildProperties.getGuildIds().forEach((guildName, guildId) -> {
+            Guild guild = event.getJDA().getGuildById(guildId);
+            if (guild == null) return;
 
-        Optional<Exam> closestUpcomingBasicsExam = examRepository.findClosestUpcomingBasicsExam();
-        basicsExamWrapper[0] = closestUpcomingBasicsExam.orElseGet(ExamListener::getDummyExam);
+            TextChannel channel = guild.getTextChannelById(managerProperties.getManagerChannels().get(guildId));
+            if (channel == null) return;
 
-        Optional<Exam> closestUpcomingFundamentalsExam = examRepository.findClosestUpcomingFundamentalsExam();
-        fundamentalsExamWrapper[0] = closestUpcomingFundamentalsExam.orElseGet(ExamListener::getDummyExam);
-
-        Optional<Exam> closestUpcomingTestExams = examRepository.findClosestUpcomingTestExams();
-        testExamWrapper[0] = closestUpcomingTestExams.orElseGet(ExamListener::getDummyExam);
-
-
-        managerStatusWrapper[0] = new ManagerStatus(2L, "null", "null", ChannelStatus.UNLOCKED);
-
-        guildProperties.getGuildIds().forEach((name, id) -> {
-            TextChannel channel = event.getJDA().getGuildById(id).getTextChannelById(managerProperties.getManagerChannels().get(id));
-            MessageCreateAction message;
-            String guildName = event.getJDA().getGuildById(id).getName();
-            if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
-                message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(managerStatusWrapper[0], basicsExamWrapper[0]));
-
-            } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
-                message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(managerStatusWrapper[0], fundamentalsExamWrapper[0]));
-
-            } else {
-                message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(managerStatusWrapper[0], testExamWrapper[0]));
-            }
-
-            Optional<ManagerStatus> managerStatus = managerStatusRepository.findByGuildId(id);
-
-                    managerStatus.ifPresentOrElse(status -> {
-                                if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
-                                    channel.retrieveMessageById(status.getCommentId()).queue(existingMessage -> {
-                                        existingMessage.editMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(status, basicsExamWrapper[0]))
-                                                .setActionRow(
-                                                        Button.primary("insert-exam", "Insert E."),
-                                                        Button.secondary("view-exam", "View E.")
-                                                )
-                                                .queue();
-                                    });
-                                } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
-                                    channel.retrieveMessageById(status.getCommentId()).queue(existingMessage -> {
-                                        existingMessage.editMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(status, fundamentalsExamWrapper[0]))
-                                                .setActionRow(
-                                                        Button.primary("insert-exam", "Insert E."),
-                                                        Button.secondary("view-exam", "View E.")
-                                                )
-                                                .queue();
-                                    });
-                                } else {
-                                    channel.retrieveMessageById(status.getCommentId()).queue(existingMessage -> {
-                                        existingMessage.editMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(status, testExamWrapper[0]))
-                                                .setActionRow(
-                                                        Button.primary("insert-exam", "Insert E."),
-                                                        Button.secondary("view-exam", "View E.")
-                                                )
-                                                .queue();
-                                    });
-                                }
-                            },
-                            () -> message.setActionRow(
-                                            Button.primary("insert-exam", "Insert E."),
-                                            Button.secondary("view-exam", "View E.")
-                                    )
-                                    .queue(currentMessage -> {
-                                        managerStatusWrapper[0].setCommentId(currentMessage.getId());
-                                        managerStatusWrapper[0].setGuildId(id);
-                                        managerStatusRepository.save(managerStatusWrapper[0]);
-                                    }));
-
+            Exam closestExam = getClosestExamForGuild(guild.getName());
+            updateManagerMessage(channel, closestExam, defaultManagerStatus, guild);
         });
+    }
+
+    private Exam getClosestExamForGuild(String guildName) {
+        if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
+            return examRepository.findClosestUpcomingBasicsExam().orElse(getDummyExam());
+        } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+            return examRepository.findClosestUpcomingFundamentalsExam().orElse(getDummyExam());
+        } else {
+            return examRepository.findClosestUpcomingTestExams().orElse(getDummyExam());
+        }
+    }
+
+    private void updateManagerMessage(TextChannel channel, Exam exam, ManagerStatus defaultManagerStatus, Guild guild) {
+        Optional<ManagerStatus> managerStatusOpt = managerStatusRepository.findByGuildId(guild.getId());
+        managerStatusOpt.ifPresentOrElse(
+                status -> updateExistingMessage(channel, status, exam),
+                () -> sendNewManagerMessage(channel, defaultManagerStatus, exam, guild)
+        );
+    }
+
+    private void updateExistingMessage(TextChannel channel, ManagerStatus status, Exam exam) {
+        channel.retrieveMessageById(status.getCommentId()).queue(existingMessage -> {
+            existingMessage.editMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(status, exam))
+                    .setActionRow(
+                            Button.primary("insert-exam", "Insert E."),
+                            Button.secondary("view-exam", "View E.")
+                    ).queue();
+        });
+    }
+
+    private void sendNewManagerMessage(TextChannel channel, ManagerStatus defaultManagerStatus, Exam exam, Guild guild) {
+        boolean channelsAreOpen = checkIfTheChannelsAreOpened(guild);
+        defaultManagerStatus.setGuildId(guild.getId());
+        defaultManagerStatus.setCurrentStatus(channelsAreOpen ? ChannelStatus.UNLOCKED : ChannelStatus.LOCKED);
+        MessageCreateAction message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(defaultManagerStatus, exam));
+        message.setActionRow(
+                Button.primary("insert-exam", "Insert E."),
+                Button.secondary("view-exam", "View E.")
+        ).queue(sentMessage -> {
+            defaultManagerStatus.setCommentId(sentMessage.getId());
+            managerStatusRepository.save(defaultManagerStatus);
+        });
+    }
+
+    private boolean checkIfTheChannelsAreOpened(Guild guild) {
+        AtomicBoolean checked = new AtomicBoolean(false);
+        guildProperties.getVoiceChannelsToLock().forEach((serverName, categoryId) -> {
+            if (guild.getName().contains(serverName)) {
+                guild.getCategoryById(categoryId).getChannels().forEach(channel -> {
+                    if (channel instanceof VoiceChannel voiceChannel) {
+                        int userLimit = voiceChannel.getUserLimit();
+                        if (userLimit > 1) {
+                            checked.set(true);
+                        }
+                    }
+                });
+            }
+        });
+
+        return checked.get();
     }
 
     private static @NotNull Exam getDummyExam() {
@@ -131,112 +130,102 @@ public class ExamListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        if (!event.getButton().getId().equals("insert-exam")) return;
+        if (!"insert-exam".equals(event.getButton().getId())) return;
 
         if (!event.getMember().getPermissions().contains(Permission.MESSAGE_MANAGE)) {
             event.reply("You have no permission!").setEphemeral(true).queue();
             return;
         }
-        String placeHolder;
-        String guildName = event.getGuild().getName();
-        if (guildName.contains("Basics")) {
-            placeHolder = "e.g., Programming Basics - септември 2023";
-        } else if (guildName.contains("Fundamentals")) {
-            placeHolder = "e.g., Programming Fundamentals - септември 2023";
-        } else {
-            placeHolder = "e.g., Test Basics - септември 2023";
-        }
 
+        String placeholder = getPlaceholderForGuild(event.getGuild().getName());
         event.replyModal(Modal.create("insert-exam-modal", "Insert Exam")
-                .addActionRow(TextInput.create("course-name", "COURSE NAME", TextInputStyle.SHORT)
-                        .setPlaceholder(placeHolder)
-                        .build())
-                .addActionRow(TextInput.create("start-date", "START DATE (dd-MM-yyyy)", TextInputStyle.SHORT)
-                        .setPlaceholder("e.g., 01-09-2023")
-                        .build())
-                .addActionRow(TextInput.create("end-date", "END DATE (dd-MM-yyyy)", TextInputStyle.SHORT)
-                        .setPlaceholder("e.g., 30-09-2023")
-                        .build())
+                .addActionRow(TextInput.create("course-name", "COURSE NAME", TextInputStyle.SHORT).setPlaceholder(placeholder).build())
+                .addActionRow(TextInput.create("start-date", "START DATE (dd-MM-yyyy)", TextInputStyle.SHORT).setPlaceholder("e.g., 01-09-2023").build())
+                .addActionRow(TextInput.create("end-date", "END DATE (dd-MM-yyyy)", TextInputStyle.SHORT).setPlaceholder("e.g., 30-09-2023").build())
                 .build()).queue();
     }
 
+    private String getPlaceholderForGuild(String guildName) {
+        if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
+            return "e.g., Programming Basics - септември 2023";
+        } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+            return "e.g., Programming Fundamentals - септември 2023";
+        } else {
+            return "e.g., Test Basics - септември 2023";
+        }
+    }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        if (event.getModalId().equals("insert-exam-modal")) {
-            String courseName = event.getValue("course-name").getAsString();
-            String startDateStr = event.getValue("start-date").getAsString();
-            String endDateStr = event.getValue("end-date").getAsString();
+        if ("insert-exam-modal".equals(event.getModalId())) {
+            processExamModal(event);
+        }
+    }
 
-            Guild guild = event.getGuild();
+    private void processExamModal(ModalInteractionEvent event) {
+        String courseName = event.getValue("course-name").getAsString();
+        String startDateStr = event.getValue("start-date").getAsString();
+        String endDateStr = event.getValue("end-date").getAsString();
 
+        Guild guild = event.getGuild();
+
+        if (!validateCourseForGuild(guild.getName(), courseName)) {
+            event.reply("Error: " + courseName + " is not a course for this server!").setEphemeral(true).queue();
+            return;
+        }
+
+        try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
             dateFormat.setLenient(false);
-            boolean examIsNotForThisServer = guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS));
-            boolean examIsNotForThisServer2 = guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && !courseName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS));
-            if (examIsNotForThisServer || examIsNotForThisServer2) {
-                event.reply("Error: " + courseName + " is not a course for this server!").setEphemeral(true).queue();
-                return;
-            }
 
-            try {
-                Date startDate = dateFormat.parse(startDateStr);
-                Date endDate = dateFormat.parse(endDateStr);
+            Date startDate = parseDate(startDateStr, dateFormat);
+            Date endDate = parseDate(endDateStr, dateFormat);
 
-                Date today = new Date();
-                today = dateFormat.parse(dateFormat.format(today));
+            validateDates(event, startDate, endDate, dateFormat);
 
-                if (startDate.before(today) || endDate.before(today)) {
-                    event.reply("Error: The exam dates cannot be before today.").setEphemeral(true).queue();
-                    return;
-                }
-
-                if (!startDate.before(endDate)) {
-                    if (!guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) && startDate.equals(endDate)) {
-                        event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
-                        return;
-                    }
-                }
-
-                Optional<Exam> existingExam = examRepository.findByCourseNameAndStartDateAndEndDate(courseName, startDateStr, endDateStr);
-                if (existingExam.isPresent()) {
-                    event.reply("Error: An exam with the same course name and dates already exists.").setEphemeral(true).queue();
-                    return;
-                }
-
-                Exam exam = new Exam();
-                exam.setCourseName(courseName);
-                exam.setStartDate(dateFormat.format(startDate));
-                exam.setEndDate(dateFormat.format(endDate));
-
-                examRepository.save(exam);
-
-                if (guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
-                    Optional<Exam> closestUpcomingBasicsExam = examRepository.findClosestUpcomingBasicsExam();
-                    if (closestUpcomingBasicsExam.isPresent()) {
-                        exam = closestUpcomingBasicsExam.get();
-                    }
-                } else if (guild.getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
-                    Optional<Exam> closestUpcomingFundamentalsExam = examRepository.findClosestUpcomingFundamentalsExam();
-                    if (closestUpcomingFundamentalsExam.isPresent()) {
-                        exam = closestUpcomingFundamentalsExam.get();
-                    }
-                } else {
-                    Optional<Exam> closestUpcomingTestExams = examRepository.findClosestUpcomingTestExams();
-                    if (closestUpcomingTestExams.isPresent()) {
-                        exam = closestUpcomingTestExams.get();
-                    }
-                }
-
-                EmbeddedMessages.updateManagerMessage(guild, exam, managerStatusRepository, managerProperties);
-
+            if (!examExists(courseName, startDateStr, endDateStr)) {
+                saveExam(courseName, startDate, endDate, guild);
                 event.reply("Success: Exam inserted successfully!").setEphemeral(true).queue();
-
-            } catch (ParseException e) {
-                event.reply("Error: Invalid date format. Please use dd-MM-yyyy.").setEphemeral(true).queue();
-            } catch (Exception e) {
-                event.reply("An unexpected error occurred. Please try again.").setEphemeral(true).queue();
+            } else {
+                event.reply("Error: An exam with the same course name and dates already exists.").setEphemeral(true).queue();
             }
+        } catch (ParseException e) {
+            event.reply("Error: Invalid date format. Please use dd-MM-yyyy.").setEphemeral(true).queue();
+        } catch (Exception e) {
+            event.reply("An unexpected error occurred. Please try again.").setEphemeral(true).queue();
         }
+    }
+
+    private boolean validateCourseForGuild(String guildName, String courseName) {
+        return (!guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS)) || courseName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) &&
+                (!guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)) || courseName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS)));
+    }
+
+    private Date parseDate(String dateStr, SimpleDateFormat dateFormat) throws ParseException {
+        return dateFormat.parse(dateStr);
+    }
+
+    private void validateDates(ModalInteractionEvent event, Date startDate, Date endDate, SimpleDateFormat dateFormat) throws ParseException {
+        Date today = dateFormat.parse(dateFormat.format(new Date()));
+        if (startDate.before(today) || endDate.before(today)) {
+            event.reply("Error: The exam dates cannot be before today.").setEphemeral(true).queue();
+        } else if (!startDate.before(endDate)) {
+            event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
+        }
+    }
+
+    private boolean examExists(String courseName, String startDateStr, String endDateStr) {
+        return examRepository.findByCourseNameAndStartDateAndEndDate(courseName, startDateStr, endDateStr).isPresent();
+    }
+
+    private void saveExam(String courseName, Date startDate, Date endDate, Guild guild) {
+        Exam exam = new Exam();
+        exam.setCourseName(courseName);
+        exam.setStartDate(new SimpleDateFormat("dd-MM-yyyy").format(startDate));
+        exam.setEndDate(new SimpleDateFormat("dd-MM-yyyy").format(endDate));
+        examRepository.save(exam);
+
+        exam = getClosestExamForGuild(guild.getName());
+        EmbeddedMessages.updateManagerMessage(guild, exam, managerStatusRepository, managerProperties);
     }
 }

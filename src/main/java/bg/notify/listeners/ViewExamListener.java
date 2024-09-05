@@ -29,23 +29,34 @@ public class ViewExamListener extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         if (!event.getButton().getId().equals("view-exam")) return;
+
         if (!event.getMember().getPermissions().contains(Permission.MESSAGE_MANAGE)) {
-            event.reply("You have no permission!").setEphemeral(true).queue();
+            event.reply("You don't have permission to view exams!").setEphemeral(true).queue();
             return;
         }
-        String name = event.getGuild().getName();
-        List<Exam> exams;
-        if (name.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
-            exams = examRepository.findUpcomingFundamentalsExams();
-        } else if (name.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))){
-            exams = examRepository.findUpcomingBasicsExams();
-        } else {
-            exams = examRepository.findUpcomingTestExams();
+
+        String guildName = event.getGuild().getName();
+        List<Exam> exams = fetchExamsForGuild(guildName);
+
+        if (exams.isEmpty()) {
+            event.reply("No upcoming exams found.").setEphemeral(true).queue();
+            return;
         }
+
         try {
-            event.replyEmbeds(EmbeddedMessages.getExamListMessage(exams, name)).setEphemeral(true).queue();
+            event.replyEmbeds(EmbeddedMessages.getExamListMessage(exams, guildName)).setEphemeral(true).queue();
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            event.reply("An error occurred while processing the exam list. Please try again later.").setEphemeral(true).queue();
+        }
+    }
+
+    private List<Exam> fetchExamsForGuild(String guildName) {
+        if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+            return examRepository.findUpcomingFundamentalsExams();
+        } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
+            return examRepository.findUpcomingBasicsExams();
+        } else {
+            return examRepository.findUpcomingTestExams();
         }
     }
 }
