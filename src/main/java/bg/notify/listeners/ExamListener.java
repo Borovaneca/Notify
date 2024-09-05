@@ -216,7 +216,9 @@ public class ExamListener extends ListenerAdapter {
         if (startDate.before(today) || endDate.before(today)) {
             event.reply("Error: The exam dates cannot be before today.").setEphemeral(true).queue();
         } else if (!startDate.before(endDate)) {
-            event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
+            if (!event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+                event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
+            }
         }
     }
 
