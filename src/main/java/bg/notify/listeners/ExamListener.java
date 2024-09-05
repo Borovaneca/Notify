@@ -11,8 +11,10 @@ import bg.notify.repositories.ManagerStatusRepository;
 import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Component;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -50,7 +54,6 @@ public class ExamListener extends ListenerAdapter {
 
     @Override
     public void onReady(ReadyEvent event) {
-        ManagerStatus defaultManagerStatus = new ManagerStatus(2L, "null", "null", ChannelStatus.UNLOCKED);
 
         guildProperties.getGuildIds().forEach((guildName, guildId) -> {
             Guild guild = event.getJDA().getGuildById(guildId);
@@ -60,7 +63,7 @@ public class ExamListener extends ListenerAdapter {
             if (channel == null) return;
 
             Exam closestExam = getClosestExamForGuild(guild.getName());
-            updateManagerMessage(channel, closestExam, defaultManagerStatus, guild);
+            updateManagerMessage(channel, closestExam, guild);
         });
     }
 
@@ -74,11 +77,11 @@ public class ExamListener extends ListenerAdapter {
         }
     }
 
-    private void updateManagerMessage(TextChannel channel, Exam exam, ManagerStatus defaultManagerStatus, Guild guild) {
+    private void updateManagerMessage(TextChannel channel, Exam exam, Guild guild) {
         Optional<ManagerStatus> managerStatusOpt = managerStatusRepository.findByGuildId(guild.getId());
         managerStatusOpt.ifPresentOrElse(
                 status -> updateExistingMessage(channel, status, exam),
-                () -> sendNewManagerMessage(channel, defaultManagerStatus, exam, guild)
+                () -> sendNewManagerMessage(channel, exam, guild)
         );
     }
 
@@ -92,8 +95,9 @@ public class ExamListener extends ListenerAdapter {
         });
     }
 
-    private void sendNewManagerMessage(TextChannel channel, ManagerStatus defaultManagerStatus, Exam exam, Guild guild) {
+    private void sendNewManagerMessage(TextChannel channel, Exam exam, Guild guild) {
         boolean channelsAreOpen = checkIfTheChannelsAreOpened(guild);
+        ManagerStatus defaultManagerStatus = new ManagerStatus();
         defaultManagerStatus.setGuildId(guild.getId());
         defaultManagerStatus.setCurrentStatus(channelsAreOpen ? ChannelStatus.UNLOCKED : ChannelStatus.LOCKED);
         MessageCreateAction message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(defaultManagerStatus, exam));
@@ -108,19 +112,21 @@ public class ExamListener extends ListenerAdapter {
 
     private boolean checkIfTheChannelsAreOpened(Guild guild) {
         AtomicBoolean checked = new AtomicBoolean(false);
-        guildProperties.getVoiceChannelsToLock().forEach((serverName, categoryId) -> {
-            if (guild.getName().contains(serverName)) {
-                guild.getCategoryById(categoryId).getChannels().forEach(channel -> {
+        for (Map.Entry<String, String> stringStringEntry : guildProperties.getVoiceChannelsToLock().entrySet()) {
+            String key = stringStringEntry.getKey();
+            if (guild.getId().equals(key)) {
+                Category category = guild.getCategoryById(stringStringEntry.getValue());
+                List<GuildChannel> channels = category.getChannels();
+                for (GuildChannel channel : channels) {
                     if (channel instanceof VoiceChannel voiceChannel) {
-                        int userLimit = voiceChannel.getUserLimit();
-                        if (userLimit > 1) {
+                        if (voiceChannel.getUserLimit() > 1) {
                             checked.set(true);
+                            break;
                         }
                     }
-                });
+                }
             }
-        });
-
+        }
         return checked.get();
     }
 
