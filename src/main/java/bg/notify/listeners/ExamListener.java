@@ -187,7 +187,8 @@ public class ExamListener extends ListenerAdapter {
             Date startDate = parseDate(startDateStr, dateFormat);
             Date endDate = parseDate(endDateStr, dateFormat);
 
-            validateDates(event, startDate, endDate, dateFormat);
+            boolean validDates = validateDates(event, startDate, endDate, dateFormat);
+            if (!validDates) return;
 
             if (!examExists(courseName, startDateStr, endDateStr)) {
                 saveExam(courseName, startDate, endDate, guild);
@@ -211,15 +212,19 @@ public class ExamListener extends ListenerAdapter {
         return dateFormat.parse(dateStr);
     }
 
-    private void validateDates(ModalInteractionEvent event, Date startDate, Date endDate, SimpleDateFormat dateFormat) throws ParseException {
+    private boolean validateDates(ModalInteractionEvent event, Date startDate, Date endDate, SimpleDateFormat dateFormat) throws ParseException {
         Date today = dateFormat.parse(dateFormat.format(new Date()));
         if (startDate.before(today) || endDate.before(today)) {
             event.reply("Error: The exam dates cannot be before today.").setEphemeral(true).queue();
+            return false;
         } else if (!startDate.before(endDate)) {
-            if (!event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
-                event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
+            if (event.getGuild().getName().contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
+                return true;
             }
+            event.reply("Error: Start date must be before the end date.").setEphemeral(true).queue();
+            return false;
         }
+        return true;
     }
 
     private boolean examExists(String courseName, String startDateStr, String endDateStr) {
