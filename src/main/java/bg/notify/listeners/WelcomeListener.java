@@ -41,7 +41,7 @@ public class WelcomeListener extends ListenerAdapter {
         List<SelectOption> options = createSelectOptions(event.getGuild().getName(), guildProperties);
 
         StringSelectMenu menu = StringSelectMenu.create("role_select")
-                .setPlaceholder("Select your programming language")
+                .setPlaceholder("Изберете своя програмен език")
                 .addOptions(options)
                 .build();
 
@@ -85,13 +85,13 @@ public class WelcomeListener extends ListenerAdapter {
 
             if (member.getRoles().contains(role)) {
                 guild.removeRoleFromMember(member, role).queue();
-                event.reply(role.getName() + " role has been removed!").setEphemeral(true).queue();
+                event.reply(role.getName() + " роля беше премахната!").setEphemeral(true).queue();
             } else {
                 guild.addRoleToMember(member, role).queue();
-                event.reply("Congratulations! You have been assigned the " + role.getName() + " role!").setEphemeral(true).queue();
+                event.reply("Честито! Вие получихте " + role.getName() + " роля!").setEphemeral(true).queue();
             }
         } else {
-            event.reply("Sorry, something went wrong. Please try again.").setEphemeral(true).queue();
+            event.reply("Извинявам се, но нещо се обърка. Опитайте отново!").setEphemeral(true).queue();
         }
     }
 

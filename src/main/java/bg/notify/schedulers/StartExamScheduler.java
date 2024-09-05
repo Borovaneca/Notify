@@ -9,14 +9,17 @@ import bg.notify.enums.GuildNames;
 import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
 import bg.notify.utils.EmbeddedMessages;
+import jakarta.annotation.PostConstruct;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -94,10 +97,14 @@ public class StartExamScheduler {
         for (String categoryId : textCategoriesIds) {
             Category category = guild.getCategoryById(categoryId);
             category.getChannels().forEach(channel -> {
-                if (channel.getType() == ChannelType.TEXT) {
+                if (channel.getType() == ChannelType.TEXT ) {
                     TextChannel textChannel = (TextChannel) channel;
                     textChannel.getManager().putPermissionOverride(everyOneRole, null, EnumSet.of(Permission.MESSAGE_SEND)).queue();
                     textChannel.getManager().putPermissionOverride(guild.getPublicRole(), EnumSet.of(Permission.VIEW_CHANNEL), EnumSet.of(Permission.MESSAGE_SEND)).queue();
+                } else if (channel.getType() == ChannelType.NEWS) {
+                    NewsChannel newsChannel = (NewsChannel) channel;
+                    newsChannel.getManager().putPermissionOverride(everyOneRole, null, EnumSet.of(Permission.MESSAGE_SEND)).queue();
+                    newsChannel.getManager().putPermissionOverride(guild.getPublicRole(), EnumSet.of(Permission.VIEW_CHANNEL), EnumSet.of(Permission.MESSAGE_SEND)).queue();
                 }
             });
         }

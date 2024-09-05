@@ -46,7 +46,7 @@ public class UserRoleReminderScheduler {
             List<SelectOption> options = WelcomeListener.createSelectOptions(guild.getName(), guildProperties);
 
             StringSelectMenu menu = StringSelectMenu.create("role_select")
-                    .setPlaceholder("Select your programming language")
+                    .setPlaceholder("Изберете своя програмен език")
                     .addOptions(options)
                     .build();
 

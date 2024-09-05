@@ -11,6 +11,7 @@ import bg.notify.repositories.ManagerStatusRepository;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,6 +125,8 @@ public class EndExamScheduler {
             guild.getCategoryById(categoryId).getChannels().forEach(channel -> {
                 if (channel instanceof TextChannel textChannel) {
                     textChannel.getManager().removePermissionOverride(everyRole).queue();
+                } else if (channel instanceof NewsChannel newsChannel) {
+                    newsChannel.getManager().removePermissionOverride(everyRole).queue();
                 }
             });
         }

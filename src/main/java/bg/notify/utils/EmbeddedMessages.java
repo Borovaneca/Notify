@@ -38,14 +38,14 @@ public class EmbeddedMessages {
 
     public static MessageEmbed getWelcomeMessage() {
         EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.setTitle("🎉 Welcome to the SoftUni Discord Server!");
+        embedBuilder.setTitle("🎉 Добре дошли!");
         embedBuilder.setDescription(
-                "We're thrilled to have you here and can't wait for you to dive in! 🎊\n\n" +
-                        "🛠 **Select Your Programming Language**\n" +
-                        "To get started in our community, please choose your programming language from the dropdown below and unlock relevant channels to connect with fellow learners and developers!\n\n" +
-                        "⚠️ **Important Reminder:**\n" +
-                        "Don't forget to check out the #rules channel to stay updated with community guidelines.\n\n" +
-                        "We're here to help if you need anything. Enjoy your time with us!"
+                "Много се радваме, че сте тук, и нямаме търпение да се впуснете в приключението! 🎊\n\n" +
+                        "🛠 **Изберете своя програмен език**\n" +
+                        "За да започнете в нашата общност, моля, изберете своя програмен език от падащото меню по-долу и отключете съответните канали, за да се свържете с други учащи и разработчици!\n\n" +
+                        "⚠️ **Важно напомняне:**\n" +
+                        "Не забравяйте да разгледате канала #rules, за да сте в течение с правилата на общността.\n\n" +
+                        "Ние сме тук, за да ви помогнем, ако имате нужда от нещо. Насладете се на времето, прекарано с нас!"
         );
         embedBuilder.setColor(Color.CYAN);
 
@@ -196,23 +196,23 @@ public class EmbeddedMessages {
     public static MessageEmbed getMessageForUsersWithoutRoles() {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
-        embedBuilder.setTitle("🚨 Role Reminder: Choose Your Programming Language!");
+        embedBuilder.setTitle("🚨 Напомняне за роля: Изберете вашия програмен език!");
         embedBuilder.setDescription(
-                "It looks like you haven't selected a programming language yet! 🔍\n\n" +
-                        "To fully unlock the server and access channels dedicated to your interests, please choose your programming language from the dropdown below. 🌐\n\n" +
-                        "This will help you connect with other learners and developers in your field!\n"
+                "Изглежда, че все още не сте избрали програмен език! 🔍\n\n" +
+                        "За да отключите напълно сървъра и да получите достъп до канали, посветени на вашите интереси, моля, изберете вашия програмен език от падащото меню по-долу. 🌐\n\n" +
+                        "Това ще ви помогне да се свържете с други учащи и разработчици във вашата област!\n"
         );
 
-        embedBuilder.addField("👨‍💻 Why You Should Select a Language:",
-                "By selecting your programming language, you'll gain access to specific channels and resources tailored to your interests and expertise!",
+        embedBuilder.addField("👨‍💻 Защо трябва да изберете език:",
+                "Като изберете вашия програмен език, ще получите достъп до специфични канали и ресурси, съобразени с вашите интереси и експертиза!",
                 false);
 
-        embedBuilder.addField("❗ Important:",
-                "If you're unsure, you can always select more languages later by revisiting this menu!",
+        embedBuilder.addField("❗ Важно:",
+                "Ако не сте сигурни, винаги можете да изберете повече езици по-късно, като се върнете към това меню!",
                 false);
 
         embedBuilder.setColor(Color.YELLOW);
-        embedBuilder.setFooter("Thank you for being a part of our community! We look forward to seeing you around!");
+        embedBuilder.setFooter("Благодарим ви, че сте част от нашата общност! Очакваме с нетърпение да ви видим наоколо!");
 
         return embedBuilder.build();
     }
