@@ -52,7 +52,7 @@ public class SeminarScheduler {
             Document doc = Jsoup.parse(content.toString());
             Elements seminarElements = doc.select(".events-container-item");
 
-            List<Seminar> seminars = repository.findTop6ByOrderByIdDesc();
+            List<Seminar> seminars = repository.findAll();
 
             for (Element seminarElement : seminarElements) {
                 Seminar seminar = mapToSeminar(seminarElement);
@@ -72,5 +72,12 @@ public class SeminarScheduler {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Scheduled(cron = "0 30 13 * * ?")
+    public void removeOldSeminars() {
+        List<Seminar> allBeforeToday = repository.findAllBeforeToday();
+        repository.deleteAll(allBeforeToday);
+        
     }
 }
