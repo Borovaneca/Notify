@@ -5,6 +5,7 @@ import bg.notify.config.RolesProperties;
 import bg.notify.enums.GuildNames;
 import bg.notify.enums.GuildRoleNames;
 import bg.notify.utils.EmbeddedMessages;
+import bg.notify.utils.MenuBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -40,10 +41,7 @@ public class WelcomeListener extends ListenerAdapter {
 
         List<SelectOption> options = createSelectOptions(event.getGuild().getName(), guildProperties);
 
-        StringSelectMenu menu = StringSelectMenu.create("role_select")
-                .setPlaceholder("Изберете своя програмен език")
-                .addOptions(options)
-                .build();
+        StringSelectMenu menu = MenuBuilder.getRolesMenu(options);
 
         user.openPrivateChannel()
                 .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getWelcomeMessage())
@@ -84,7 +82,7 @@ public class WelcomeListener extends ListenerAdapter {
             Member member = guild.getMemberById(event.getUser().getId());
 
                 guild.addRoleToMember(member, role).queue();
-                event.reply("Честито! Вие получихте " + role.getName() + " роля!").setEphemeral(true).queue();
+                event.reply("Честито! Желаната от вас роля е сетната!").setEphemeral(true).queue();
 
         } else {
             event.reply("Извинявам се, но нещо се обърка. Опитайте отново!").setEphemeral(true).queue();

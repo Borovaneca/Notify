@@ -3,6 +3,7 @@ package bg.notify.schedulers;
 import bg.notify.config.GuildProperties;
 import bg.notify.listeners.WelcomeListener;
 import bg.notify.utils.EmbeddedMessages;
+import bg.notify.utils.MenuBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -12,9 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class UserRoleReminderScheduler {
@@ -45,10 +44,7 @@ public class UserRoleReminderScheduler {
 
             List<SelectOption> options = WelcomeListener.createSelectOptions(guild.getName(), guildProperties);
 
-            StringSelectMenu menu = StringSelectMenu.create("role_select")
-                    .setPlaceholder("Изберете своя програмен език")
-                    .addOptions(options)
-                    .build();
+            StringSelectMenu menu = MenuBuilder.getRolesMenu(options);
 
             membersWithoutRoles.forEach(member ->
                     member.getUser().openPrivateChannel()
@@ -56,6 +52,10 @@ public class UserRoleReminderScheduler {
                                     .addActionRow(menu))
                             .queue()
             );
+
+            guild.getTextChannelById(guildProperties.getLogsChannels().get(guild.getId()))
+                    .sendMessageEmbeds(EmbeddedMessages.getInvitationGettingRoleLogMessage(membersWithoutRoles.size()))
+                    .queue();
 
         });
     }

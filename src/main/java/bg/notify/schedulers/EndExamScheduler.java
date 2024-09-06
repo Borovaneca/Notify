@@ -94,30 +94,30 @@ public class EndExamScheduler {
         }
     }
 
-    @Scheduled(cron = "0 5 19 * * ?")
-    public void unlockTestChannelsForCompletedExams() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        String today = dateFormat.format(new Date());
-
-        List<Exam> examsToday = examRepository.findExamsByEndDate(today);
-        Guild test = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.TEST));
-        for (Exam exam : examsToday) {
-            if (exam.getCourseName().contains("Test")) {
-                unlockTextChannels(test, guildProperties.getTextChannelsToLock().get(test.getId()));
-                unlockVoiceChannels(test, guildProperties.getVoiceChannelsToLock().get(test.getId()));
-            }
-            examRepository.delete(exam);
-            Optional<Exam> closestUpcomingTestExam = examRepository.findClosestUpcomingTestExams();
-            closestUpcomingTestExam.ifPresentOrElse(closestExam -> {
-                        updateManagerMessage(test, closestExam, managerStatusRepository, managerProperties);
-                    },
-                    () -> {
-                        updateManagerMessage(test, new Exam(1L, "No course", "No course", "No course"), managerStatusRepository, managerProperties);
-                    });
-            test.getTextChannelById(guildProperties.getLogsChannels().get(test.getId()))
-                    .sendMessageEmbeds(getChannelsOpenedLogMessage(exam)).queue();
-        }
-    }
+//    @Scheduled(cron = "0 5 19 * * ?")
+//    public void unlockTestChannelsForCompletedExams() {
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+//        String today = dateFormat.format(new Date());
+//
+//        List<Exam> examsToday = examRepository.findExamsByEndDate(today);
+//        Guild test = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.TEST));
+//        for (Exam exam : examsToday) {
+//            if (exam.getCourseName().contains("Test")) {
+//                unlockTextChannels(test, guildProperties.getTextChannelsToLock().get(test.getId()));
+//                unlockVoiceChannels(test, guildProperties.getVoiceChannelsToLock().get(test.getId()));
+//            }
+//            examRepository.delete(exam);
+//            Optional<Exam> closestUpcomingTestExam = examRepository.findClosestUpcomingTestExams();
+//            closestUpcomingTestExam.ifPresentOrElse(closestExam -> {
+//                        updateManagerMessage(test, closestExam, managerStatusRepository, managerProperties);
+//                    },
+//                    () -> {
+//                        updateManagerMessage(test, new Exam(1L, "No course", "No course", "No course"), managerStatusRepository, managerProperties);
+//                    });
+//            test.getTextChannelById(guildProperties.getLogsChannels().get(test.getId()))
+//                    .sendMessageEmbeds(getChannelsOpenedLogMessage(exam)).queue();
+//        }
+//    }
 
     private void unlockTextChannels(Guild guild, List<String> textCategories) {
         Role everyRole = guild.getPublicRole();

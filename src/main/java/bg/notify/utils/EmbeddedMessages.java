@@ -232,4 +232,13 @@ public class EmbeddedMessages {
 
         return embed.build();
     }
+
+    public static MessageEmbed getInvitationGettingRoleLogMessage(int numberOfInvitedUsers) {
+        return new EmbedBuilder()
+                .setTitle("Role Assignment Invitation")
+                .setDescription(String.format("A total of **%d** users have been invited to select a role.", numberOfInvitedUsers))
+                .setColor(Color.GREEN)
+                .build();
+
+    }
 }
