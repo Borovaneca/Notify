@@ -6,6 +6,7 @@ import bg.notify.enums.GuildNames;
 import bg.notify.enums.GuildRoleNames;
 import bg.notify.utils.EmbeddedMessages;
 import bg.notify.utils.MenuBuilder;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class WelcomeListener extends ListenerAdapter {
@@ -38,6 +40,8 @@ public class WelcomeListener extends ListenerAdapter {
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         User user = event.getMember().getUser();
         if (user.isBot() || user.isSystem()) return;
+        if (userIsAlreadyInSomeGuild(event.getJDA(), event.getGuild(), event.getMember(), event.getGuild().getName()))
+            return;
 
         List<SelectOption> options = createSelectOptions(event.getGuild().getName(), guildProperties);
 
@@ -46,6 +50,28 @@ public class WelcomeListener extends ListenerAdapter {
         user.openPrivateChannel()
                 .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getWelcomeMessage())
                         .addActionRow(menu)).queue();
+    }
+
+    private boolean userIsAlreadyInSomeGuild(JDA jda, Guild currentGuild, Member user, String currentGuildName) {
+        List<String> roles = new ArrayList<>();
+        for (Guild guild : jda.getGuilds()) {
+            if (guild.equals(currentGuild)) continue;
+            Member member = guild.getMember(user);
+            member.getRoles().forEach(role -> {
+                roles.add(role.getName());
+            });
+        }
+
+        List<Role> collectedRoles = currentGuild.getRoles()
+                .stream()
+                .filter(role -> roles.contains(role.getName()))
+                .toList();
+
+        collectedRoles.forEach(role -> {
+            currentGuild.addRoleToMember(user, role).queue();
+        });
+
+        return !roles.isEmpty();
     }
 
     public static List<SelectOption> createSelectOptions(String guildName, GuildProperties guildProperties) {
@@ -81,8 +107,8 @@ public class WelcomeListener extends ListenerAdapter {
         if (role != null) {
             Member member = guild.getMemberById(event.getUser().getId());
 
-                guild.addRoleToMember(member, role).queue();
-                event.reply("Честито! Желаната от вас роля е сетната!").setEphemeral(true).queue();
+            guild.addRoleToMember(member, role).queue();
+            event.reply("Честито! Желаната от вас роля е сетната!").setEphemeral(true).queue();
 
         } else {
             event.reply("Извинявам се, но нещо се обърка. Опитайте отново!").setEphemeral(true).queue();
