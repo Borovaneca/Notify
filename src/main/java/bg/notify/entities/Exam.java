@@ -22,6 +22,12 @@ public class Exam {
     private String startDate;
     private String endDate;
 
+    public Exam(String courseName, String startDate, String endDate) {
+        this.courseName = courseName;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
     @Override
     public String toString() {
         return "Exam{" +

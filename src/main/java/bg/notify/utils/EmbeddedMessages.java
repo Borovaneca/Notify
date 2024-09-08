@@ -158,7 +158,8 @@ public class EmbeddedMessages {
                     existingMessage.editMessageEmbeds(getExamManagementPanelMessage(status, exam))
                             .setActionRow(
                                     net.dv8tion.jda.api.interactions.components.buttons.Button.primary("insert-exam", "Insert E."),
-                                    Button.secondary("view-exam", "View E.")
+                                    Button.secondary("view-exam", "View E."),
+                                    Button.primary("refresh-button", "🔄")
                             )
                             .queue();
                 }));
@@ -240,5 +241,21 @@ public class EmbeddedMessages {
                 .setColor(Color.GREEN)
                 .build();
 
+    }
+
+    public static void createExamAddedMessage(Guild guild, String channelId, Exam exam) {
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.setTitle("New Exam Added Automatically");
+        embedBuilder.setColor(Color.GREEN);
+        embedBuilder.addField("Course Name", exam.getCourseName(), false);
+        embedBuilder.addField("Start Date", exam.getStartDate(), true);
+        embedBuilder.addField("End Date", exam.getEndDate(), true);
+        embedBuilder.setFooter("Exam Notification System", null);
+
+
+        guild.getTextChannelById(channelId)
+                .sendMessageEmbeds(embedBuilder.build())
+                .queue();
     }
 }

@@ -8,6 +8,7 @@ import bg.notify.enums.ChannelStatus;
 import bg.notify.enums.GuildNames;
 import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
+import bg.notify.services.ExamService;
 import bg.notify.utils.EmbeddedMessages;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -28,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -43,33 +44,100 @@ public class ExamListener extends ListenerAdapter {
     private final ManagerStatusRepository managerStatusRepository;
     private final ManagerProperties managerProperties;
     private final GuildProperties guildProperties;
+    private final ExamService examService;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Autowired
-    public ExamListener(ExamRepository examRepository, ManagerStatusRepository managerStatusRepository, ManagerProperties managerProperties, GuildProperties guildProperties) {
+    public ExamListener(ExamRepository examRepository, ManagerStatusRepository managerStatusRepository, ManagerProperties managerProperties, GuildProperties guildProperties, ExamService examService) {
         this.examRepository = examRepository;
         this.managerStatusRepository = managerStatusRepository;
         this.managerProperties = managerProperties;
         this.guildProperties = guildProperties;
+        this.examService = examService;
     }
 
     @Override
     public void onReady(ReadyEvent event) {
 
-        guildProperties.getGuildIds().forEach((guildName, guildId) -> {
-            Guild guild = event.getJDA().getGuildById(guildId);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        for (Map.Entry<GuildNames, String> currentGuild : guildProperties.getGuildIds().entrySet()) {
+            Guild guild = event.getJDA().getGuildById(currentGuild.getValue());
             if (guild == null) return;
 
-            TextChannel channel = guild.getTextChannelById(managerProperties.getManagerChannels().get(guildId));
+            TextChannel channel = guild.getTextChannelById(managerProperties.getManagerChannels().get(currentGuild.getValue()));
             if (channel == null) return;
 
             Exam closestExam = getClosestExamForGuild(guild.getName());
-            updateManagerMessage(channel, closestExam, guild);
-        });
+            final List<Exam> exams = new ArrayList<>();
+            if (closestExam.equals(getDummyExam())) {
+                if (guild.getId().equals(guildProperties.getGuildIds().get(GuildNames.BASICS))) {
+                    try {
+                        exams.addAll(examService.checkForNewExamsBasics());
+                        saveExamAndSendMessage(guild, exams);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (guild.getId().equals(guildProperties.getGuildIds().get(GuildNames.FUNDAMENTALS))) {
+                    try {
+                        exams.addAll(examService.checkForNewExamsFundamentals());
+                        saveExamAndSendMessage(guild, exams);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                exams.sort((exam1, exam2) -> {
+                    try {
+                        Date date1 = dateFormat.parse(exam1.getStartDate());
+                        Date date2 = dateFormat.parse(exam2.getStartDate());
+                        return date1.compareTo(date2);
+                    } catch (ParseException e) {
+                        throw new RuntimeException("Invalid date format. Please use dd-MM-yyyy.", e);
+                    }
+                });
+                if (guild.getId().equals(guildProperties.getGuildIds().get(GuildNames.TEST))) {
+                    updateManagerMessage(channel, closestExam, guild);
+                }else {
+                    updateManagerMessage(channel, exams.get(0), guild);
+                }
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                updateManagerMessage(channel, closestExam, guild);
+            }
+        }
     }
 
+    public void saveExamAndSendMessage(Guild guild, List<Exam> exams) {
+
+        exams.forEach(exam -> {
+            executorService.submit(() -> {
+                examRepository.save(exam);
+
+                String channelId = guildProperties.getLogsChannels().get(guildProperties.getGuildIds().get(GuildNames.BASICS));
+                EmbeddedMessages.createExamAddedMessage(guild, channelId, exam);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Thread was interrupted", e);
+                }
+            });
+        });
+    }
     private Exam getClosestExamForGuild(String guildName) {
         if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
-            return examRepository.findClosestUpcomingBasicsExam().orElse(getDummyExam());
+            Optional<Exam> exam = examRepository.findClosestUpcomingBasicsExam();
+            return exam.orElse(getDummyExam());
         } else if (guildName.contains(guildProperties.getGuildNames().get(GuildNames.FUNDAMENTALS))) {
             return examRepository.findClosestUpcomingFundamentalsExam().orElse(getDummyExam());
         } else {
@@ -90,7 +158,8 @@ public class ExamListener extends ListenerAdapter {
             existingMessage.editMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(status, exam))
                     .setActionRow(
                             Button.primary("insert-exam", "Insert E."),
-                            Button.secondary("view-exam", "View E.")
+                            Button.secondary("view-exam", "View E."),
+                            Button.primary("refresh-button", "🔄")
                     ).queue();
         });
     }
@@ -103,7 +172,8 @@ public class ExamListener extends ListenerAdapter {
         MessageCreateAction message = channel.sendMessageEmbeds(EmbeddedMessages.getExamManagementPanelMessage(defaultManagerStatus, exam));
         message.setActionRow(
                 Button.primary("insert-exam", "Insert E."),
-                Button.secondary("view-exam", "View E.")
+                Button.secondary("view-exam", "View E."),
+                Button.primary("refresh-button", "🔄")
         ).queue(sentMessage -> {
             defaultManagerStatus.setCommentId(sentMessage.getId());
             managerStatusRepository.save(defaultManagerStatus);

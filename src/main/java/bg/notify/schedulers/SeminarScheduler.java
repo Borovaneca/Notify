@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.util.List;
 import java.util.Objects;
 
+import static bg.notify.constants.Constants.SOFT_UNI_SEMINARS_URL;
 import static bg.notify.services.SeminarService.mapToSeminar;
 
 
@@ -41,7 +42,7 @@ public class SeminarScheduler {
     @Scheduled(cron = "0 0 12 * * ?")
     public void sendDailyMessage() {
         try {
-            BufferedReader in = SeminarService.getConnection();
+            BufferedReader in = SeminarService.getConnection(SOFT_UNI_SEMINARS_URL);
             String inputLine;
             StringBuilder content = new StringBuilder();
             while ((inputLine = in.readLine()) != null) {

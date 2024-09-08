@@ -21,7 +21,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static bg.notify.constants.Urls.SOFT_UNI_SEMINARS_URL;
+import static bg.notify.constants.Constants.SOFT_UNI_SEMINARS_URL;
 
 @Service
 public class SeminarService {
@@ -39,7 +39,7 @@ public class SeminarService {
         if (seminarRepository.count() != 0) return;
 
         try {
-            BufferedReader in = getConnection();
+            BufferedReader in = getConnection(SOFT_UNI_SEMINARS_URL);
             StringBuilder content = new StringBuilder();
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
@@ -66,8 +66,7 @@ public class SeminarService {
         }
     }
 
-    public static BufferedReader getConnection() throws IOException {
-        String url = SOFT_UNI_SEMINARS_URL;
+    public static BufferedReader getConnection(String url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
