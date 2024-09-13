@@ -37,6 +37,9 @@ public class SeminarService {
     @PostConstruct
     public void initializeSeminarsDb() {
         if (seminarRepository.count() != 0) return;
+        if ("hello".equals("hello")) {
+            System.out.println("Started Seminars!");
+        }
 
         try {
             BufferedReader in = getConnection(SOFT_UNI_SEMINARS_URL);
