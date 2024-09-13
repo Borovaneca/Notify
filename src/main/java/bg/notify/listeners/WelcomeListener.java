@@ -36,45 +36,45 @@ public class WelcomeListener extends ListenerAdapter {
         this.guildProperties = guildProperties;
     }
 
-    @Override
-    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        User user = event.getMember().getUser();
-        if (user.isBot() || user.isSystem()) return;
-        if (userIsAlreadyInSomeGuild(event.getJDA(), event.getGuild(), event.getMember(), event.getGuild().getName()))
-            return;
-
-        List<SelectOption> options = createSelectOptions(event.getGuild().getName(), guildProperties);
-
-        StringSelectMenu menu = MenuBuilder.getRolesMenu(options);
-
-        user.openPrivateChannel()
-                .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getWelcomeMessage())
-                        .addActionRow(menu)).queue();
-    }
-
-    private boolean userIsAlreadyInSomeGuild(JDA jda, Guild currentGuild, Member user, String currentGuildName) {
-        List<String> roles = new ArrayList<>();
-        for (Guild guild : jda.getGuilds()) {
-            if (guild.equals(currentGuild)) continue;
-            Member member = guild.getMember(user);
-            member.getRoles().forEach(role -> {
-                roles.add(role.getName());
-            });
-        }
-
-        List<Role> collectedRoles = currentGuild.getRoles()
-                .stream()
-                .filter(role -> roles.contains(role.getName()))
-                .toList();
-
-        collectedRoles.forEach(role -> {
-            currentGuild.addRoleToMember(user, role).queue();
-        });
-
-        return !roles.isEmpty();
-    }
+//    @Override
+//    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+//        User user = event.getMember().getUser();
+//        if (user.isBot() || user.isSystem()) return;
+//        if (userIsAlreadyInSomeGuild(event.getJDA(), event.getGuild(), event.getMember(), event.getGuild().getName())) return;
+//
+//        List<SelectOption> options = createSelectOptions(event.getGuild().getName(), guildProperties);
+//
+//        StringSelectMenu menu = MenuBuilder.getRolesMenu(options);
+//
+//        user.openPrivateChannel()
+//                .flatMap(channel -> channel.sendMessageEmbeds(EmbeddedMessages.getWelcomeMessage())
+//                        .addActionRow(menu)).queue();
+//    }
+//
+//    private boolean userIsAlreadyInSomeGuild(JDA jda, Guild currentGuild, Member user, String currentGuildName) {
+//        List<String> roles = new ArrayList<>();
+//        for (Guild guild : jda.getGuilds()) {
+//            if (guild.equals(currentGuild)) continue;
+//            Member member = guild.getMember(user);
+//            member.getRoles().forEach(role -> {
+//                roles.add(role.getName());
+//            });
+//        }
+//
+//        List<Role> collectedRoles = currentGuild.getRoles()
+//                .stream()
+//                .filter(role -> roles.contains(role.getName()))
+//                .toList();
+//
+//        collectedRoles.forEach(role -> {
+//            currentGuild.addRoleToMember(user, role).queue();
+//        });
+//
+//        return !roles.isEmpty();
+//    }
 
     public static List<SelectOption> createSelectOptions(String guildName, GuildProperties guildProperties) {
+        guildName.toLowerCase();
         List<SelectOption> options = new ArrayList<>();
         options.add(SelectOption.of("Java", "java_role"));
         options.add(SelectOption.of("JavaScript", "javascript_role"));
