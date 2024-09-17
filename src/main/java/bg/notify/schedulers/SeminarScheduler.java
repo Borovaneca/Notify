@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,21 +55,25 @@ public class SeminarScheduler {
             Elements seminarElements = doc.select(".events-container-item");
 
             List<Seminar> seminars = repository.findAll();
+            List<Seminar> newSeminars = new ArrayList<>();
 
             for (Element seminarElement : seminarElements) {
                 Seminar seminar = mapToSeminar(seminarElement);
                 if (!seminars.contains(seminar)) {
                     if (DateChecker.checkDateIfItsAfter(seminar.getDate())) {
-                        valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
-                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-                                    .sendMessage(TextMessages.getSeminarMessage()).queue();
-
-                            Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
-                                    .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(seminar)).queue();
-                        });
-                        repository.save(seminar);
+                        newSeminars.add(seminar);
                     }
                 }
+            }
+            if (!newSeminars.isEmpty()) {
+                repository.saveAll(newSeminars);
+                valuableMaterialsChannels.getChannels().forEach((guild, channel) -> {
+                    Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+                            .sendMessage(TextMessages.getSeminarMessage()).queue();
+
+                    Objects.requireNonNull(Objects.requireNonNull(jda.getGuildById(guild)).getTextChannelById(channel))
+                            .sendMessageEmbeds(EmbeddedMessages.getSeminarMessage(newSeminars.toArray(Seminar[]::new))).queue();
+                });
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,6 +84,6 @@ public class SeminarScheduler {
     public void removeOldSeminars() {
         List<Seminar> allBeforeToday = repository.findAllBeforeToday();
         repository.deleteAll(allBeforeToday);
-        
+
     }
 }
