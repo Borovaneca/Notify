@@ -1,5 +1,9 @@
 # 🎉 Notify Discord Bot
 
+<div align="center">
+  <img src="https://cdn.discordapp.com/avatars/1280446385061105686/3161a22831ee1f47b11c795d7ada8dba.png?size=1024" alt="CodeRunner Logo" width="200"/>
+</div>
+
 **Notify** is a custom-built Discord bot created exclusively for the **SoftUni Discord Community**. The bot offers specialized notification services and tailored features designed to improve the overall community experience. It is maintained by SoftUni community members and will not function properly in other Discord servers without modifications.
 
 ## 🚀 Features
