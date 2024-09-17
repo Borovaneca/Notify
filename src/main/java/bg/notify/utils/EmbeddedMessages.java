@@ -21,19 +21,22 @@ import java.util.List;
 public class EmbeddedMessages {
 
 
-    public static MessageEmbed getSeminarMessage(Seminar seminar) {
-        String imageUrl = seminar.getImageUrl().trim();
-
-        return new EmbedBuilder()
-                .setTitle(seminar.getTitle(), seminar.getLink())
-                .setDescription("Онлайн събитие | Безплатно")
-                .addField("Дата", seminar.getDate(), true)
-                .addField("Час", seminar.getTime(), true)
-                .addField("Лектори", seminar.getLecturers(), false)
-                .setThumbnail(imageUrl)
-                .setColor(Color.ORANGE)
-                .addField("SoftUni Discord Community <:softuni:926272135255707718>", "", false)
-                .build();
+    public static List<MessageEmbed> getSeminarMessage(Seminar... seminars) {
+        List<MessageEmbed> messages = new ArrayList<>();
+        Arrays.stream(seminars).forEach(seminar -> {
+            String imageUrl = seminar.getImageUrl().trim();
+            messages.add(new EmbedBuilder()
+                    .setTitle(seminar.getTitle(), seminar.getLink())
+                    .setDescription("Онлайн събитие | Безплатно")
+                    .addField("Дата", seminar.getDate(), true)
+                    .addField("Час", seminar.getTime(), true)
+                    .addField("Лектори", seminar.getLecturers(), false)
+                    .setThumbnail(imageUrl)
+                    .setColor(Color.ORANGE)
+                    .addField("SoftUni Discord Community <:softuni:926272135255707718>", "", false)
+                    .build());
+        });
+        return messages;
     }
 
     public static MessageEmbed getWelcomeMessage() {
