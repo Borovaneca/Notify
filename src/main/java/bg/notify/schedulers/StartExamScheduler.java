@@ -8,25 +8,20 @@ import bg.notify.enums.ChannelStatus;
 import bg.notify.enums.GuildNames;
 import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
+import bg.notify.services.EventService;
 import bg.notify.utils.EmbeddedMessages;
-import jakarta.annotation.PostConstruct;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.dv8tion.jda.api.entities.channel.concrete.Category;
-import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,23 +30,26 @@ import static bg.notify.utils.EmbeddedMessages.updateManagerMessage;
 @Component
 public class StartExamScheduler {
 
+    private static final Logger log = LoggerFactory.getLogger(StartExamScheduler.class);
     private final ExamRepository examRepository;
     private final ManagerStatusRepository managerStatusRepository;
+    private final EventService eventService;
     private final ManagerProperties managerProperties;
     private JDA jda;
     private final GuildProperties guildProperties;
 
     @Autowired
-    public StartExamScheduler(ExamRepository examRepository, ManagerStatusRepository managerStatusRepository, ManagerProperties managerProperties, JDA jda, GuildProperties guildProperties) {
+    public StartExamScheduler(ExamRepository examRepository, ManagerStatusRepository managerStatusRepository, EventService eventService, ManagerProperties managerProperties, JDA jda, GuildProperties guildProperties) {
         this.examRepository = examRepository;
         this.managerStatusRepository = managerStatusRepository;
+        this.eventService = eventService;
         this.managerProperties = managerProperties;
         this.jda = jda;
         this.guildProperties = guildProperties;
     }
 
     @Scheduled(cron = "0 0 9 * * ?")
-    public void checkExamDay() {
+    public void checkExamDay() throws IOException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         String today = dateFormat.format(new Date());
 
@@ -77,53 +75,20 @@ public class StartExamScheduler {
         }
     }
 
-    private void proceed(Exam exam, Guild guild) {
-        List<String> textChannelsIds = guildProperties.getTextChannelsToLock().get(guild.getId());
-        String voiceCategory = guildProperties.getVoiceChannelsToLock().get(guild.getId());
+    private void proceed(Exam exam, Guild guild) throws IOException {
 
-        lockTextCategories(guild, textChannelsIds);
-        lockVoiceCategories(guild, voiceCategory);
+        TextChannel logChannel = jda.getTextChannelById(guildProperties.getLogsChannels().get(guild.getId()));
+        logChannel.sendMessageEmbeds(EmbeddedMessages.getChannelsClosedLogMessage(exam)).queue();
 
-        guild.getTextChannelById(guildProperties.getLogsChannels().get(guild.getId()))
-                        .sendMessageEmbeds(EmbeddedMessages.getChannelsClosedLogMessage(exam))
-                                .queue();
+        eventService.createCloseChannelsEvent(guild.getId(), logChannel);
 
-        updateManagerMessage(guild, exam, managerStatusRepository, managerProperties);
-    }
-
-    private void lockTextCategories(Guild guild, List<String> textCategoriesIds) {
-
-        Role everyOneRole = guild.getPublicRole();
-        for (String categoryId : textCategoriesIds) {
-            Category category = guild.getCategoryById(categoryId);
-            category.getChannels().forEach(channel -> {
-                if (channel.getType() == ChannelType.TEXT ) {
-                    TextChannel textChannel = (TextChannel) channel;
-                    textChannel.getManager().putPermissionOverride(everyOneRole, null, EnumSet.of(Permission.MESSAGE_SEND)).queue();
-                    textChannel.getManager().putPermissionOverride(guild.getPublicRole(), EnumSet.of(Permission.VIEW_CHANNEL), EnumSet.of(Permission.MESSAGE_SEND)).queue();
-                } else if (channel.getType() == ChannelType.NEWS) {
-                    NewsChannel newsChannel = (NewsChannel) channel;
-                    newsChannel.getManager().putPermissionOverride(everyOneRole, null, EnumSet.of(Permission.MESSAGE_SEND)).queue();
-                    newsChannel.getManager().putPermissionOverride(guild.getPublicRole(), EnumSet.of(Permission.VIEW_CHANNEL), EnumSet.of(Permission.MESSAGE_SEND)).queue();
-                }
-            });
-        }
         Optional<ManagerStatus> status = managerStatusRepository.findByGuildId(guild.getId());
         if (status.isPresent()) {
             ManagerStatus currentStatus = status.get();
             currentStatus.setCurrentStatus(ChannelStatus.LOCKED);
             managerStatusRepository.save(currentStatus);
         }
-    }
 
-    private void lockVoiceCategories(Guild guild, String voiceCategory) {
-
-            Category category = guild.getCategoryById(voiceCategory);
-            category.getChannels().forEach(channel -> {
-                if (channel.getType() == ChannelType.VOICE) {
-                    VoiceChannel voiceChannel = (VoiceChannel) channel;
-                    voiceChannel.getManager().setUserLimit(1).queue();
-                }
-            });
+        updateManagerMessage(guild, exam, managerStatusRepository, managerProperties);
     }
 }

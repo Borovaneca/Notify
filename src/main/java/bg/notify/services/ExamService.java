@@ -24,7 +24,6 @@ import static bg.notify.services.SeminarService.getConnection;
 @Service
 public class ExamService {
 
-    // Consolidating date formatter for reuse
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("d MMMM yyyy", new Locale("bg", "BG"));
     private static final DateTimeFormatter OUTPUT_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
