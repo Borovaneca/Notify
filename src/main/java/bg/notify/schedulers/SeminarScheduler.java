@@ -84,6 +84,6 @@ public class SeminarScheduler {
     public void removeOldSeminars() {
         List<Seminar> allBeforeToday = repository.findAllBeforeToday();
         repository.deleteAll(allBeforeToday);
-        
+
     }
 }

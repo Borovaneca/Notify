@@ -10,6 +10,8 @@ public final class Constants {
     public static final String BASICS_COURSE_URL = "https://softuni.bg/courses/programming-basics";
     public static final String FUNDAMENTALS_COURSE_URL = "https://softuni.bg/courses/programming-fundamentals-csharp-java-js-python";
     public static final String DATE_REGEX = "(\\d{1,2})\\sи\\s(\\d{1,2})\\s([а-яА-Я]+)";
+    public static final String LOCK_CHANNELS_ENDPOINT = "http://localhost:8787/lock/%s";
+    public static final String UNLOCK_CHANNELS_ENDPOINT = "http://localhost:8787/unlock/%s";
     public static final Map<String, String> months = new HashMap<>() {
         {
             put("january", "януари");

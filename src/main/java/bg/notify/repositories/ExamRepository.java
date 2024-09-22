@@ -32,9 +32,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findExamsByEndDate(String today);
 
-    @Query(value = "SELECT * FROM exams e WHERE e.course_name LIKE 'Test%' AND STR_TO_DATE(e.start_date, '%d-%m-%Y') >= CURDATE() ORDER BY STR_TO_DATE(e.start_date, '%d-%m-%Y') ASC", nativeQuery = true)
+    @Query(value = "SELECT * FROM exams e WHERE e.course_name LIKE 'Lover%' AND STR_TO_DATE(e.start_date, '%d-%m-%Y') >= CURDATE() ORDER BY STR_TO_DATE(e.start_date, '%d-%m-%Y') ASC", nativeQuery = true)
     List<Exam> findUpcomingTestExams();
 
-    @Query(value = "SELECT * FROM exams e WHERE e.course_name LIKE 'Test%' AND STR_TO_DATE(e.start_date, '%d-%m-%Y') >= CURDATE() ORDER BY STR_TO_DATE(e.start_date, '%d-%m-%Y') ASC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM exams e WHERE e.course_name LIKE 'Lover%' AND STR_TO_DATE(e.start_date, '%d-%m-%Y') >= CURDATE() ORDER BY STR_TO_DATE(e.start_date, '%d-%m-%Y') ASC LIMIT 1", nativeQuery = true)
     Optional<Exam> findClosestUpcomingTestExams();
 }

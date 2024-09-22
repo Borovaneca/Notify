@@ -39,7 +39,7 @@ public class ExamReminder {
             if (exam.getCourseName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
 
                 Guild basics = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.BASICS));
-                        Objects.requireNonNull(basics.getTextChannelById(guildProperties.getAnnouncementChannels().get(basics.getId())))
+                Objects.requireNonNull(basics.getTextChannelById(guildProperties.getAnnouncementChannels().get(basics.getId())))
                         .sendMessageEmbeds(EmbeddedMessages.getExamReminderBasics(exam))
                         .queue();
 

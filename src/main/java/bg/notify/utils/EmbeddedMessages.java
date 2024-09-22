@@ -23,36 +23,21 @@ public class EmbeddedMessages {
 
     public static List<MessageEmbed> getSeminarMessage(Seminar... seminars) {
         List<MessageEmbed> messages = new ArrayList<>();
-        Arrays.stream(seminars).forEach(seminar -> {
-            String imageUrl = seminar.getImageUrl().trim();
-            messages.add(new EmbedBuilder()
-                    .setTitle(seminar.getTitle(), seminar.getLink())
-                    .setDescription("Онлайн събитие | Безплатно")
-                    .addField("Дата", seminar.getDate(), true)
-                    .addField("Час", seminar.getTime(), true)
-                    .addField("Лектори", seminar.getLecturers(), false)
-                    .setThumbnail(imageUrl)
-                    .setColor(Color.ORANGE)
-                    .addField("SoftUni Discord Community <:softuni:926272135255707718>", "", false)
-                    .build());
-        });
+        Arrays.stream(seminars)
+                .forEach(seminar -> {
+                    String imageUrl = seminar.getImageUrl().trim();
+                    messages.add(new EmbedBuilder()
+                            .setTitle(seminar.getTitle(), seminar.getLink())
+                            .setDescription("Онлайн събитие | Безплатно")
+                            .addField("Дата", seminar.getDate(), true)
+                            .addField("Час", seminar.getTime(), true)
+                            .addField("Лектори", seminar.getLecturers(), false)
+                            .setThumbnail(imageUrl)
+                            .setColor(Color.ORANGE)
+                            .addField("SoftUni Discord Community <:softuni:926272135255707718>", "", false)
+                            .build());
+                });
         return messages;
-    }
-
-    public static MessageEmbed getWelcomeMessage() {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.setTitle("🎉 Добре дошли!");
-        embedBuilder.setDescription(
-                "Много се радваме, че сте тук, и нямаме търпение да се впуснете в приключението! 🎊\n\n" +
-                        "🛠 **Изберете своя програмен език**\n" +
-                        "За да започнете в нашата общност, моля, изберете своя програмен език от падащото меню по-долу и отключете съответните канали, за да се свържете с други учащи и разработчици!\n\n" +
-                        "⚠️ **Важно напомняне:**\n" +
-                        "Не забравяйте да разгледате канала #rules, за да сте в течение с правилата на общността.\n\n" +
-                        "Ние сме тук, за да ви помогнем, ако имате нужда от нещо. Насладете се на времето, прекарано с нас!"
-        );
-        embedBuilder.setColor(Color.CYAN);
-
-        return embedBuilder.build();
     }
 
     public static MessageEmbed getExamManagementPanelMessage(ManagerStatus managerStatus, Exam exam) {
@@ -171,12 +156,12 @@ public class EmbeddedMessages {
     public static MessageEmbed getChannelsClosedLogMessage(Exam exam) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
-        embedBuilder.setTitle("🚨 Channels Closed for Exam")
-                .setDescription("The channels have been **locked** for the duration of the exam.\n\n"
+        embedBuilder.setTitle("🚨 Closing channels event")
+                .setDescription("Sending event to Sentinel to close the channels!\n\n"
                         + "**Exam:** " + exam.getCourseName() + "\n"
                         + "**Start Date:** " + exam.getStartDate() + "\n"
                         + "**End Date:** " + exam.getEndDate() + "\n\n"
-                        + "Text and voice channels are now restricted until the exam is over.")
+                        + "Please wait 1-2 minutes for Sentinel to lock all channels!")
                 .setColor(Color.RED)
                 .setFooter("Channels will be unlocked after the exam ends.");
 
@@ -186,39 +171,27 @@ public class EmbeddedMessages {
     public static MessageEmbed getChannelsOpenedLogMessage(Exam exam) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
-        embedBuilder.setTitle("✅ Channels Reopened")
-                .setDescription("The channels have been **unlocked** after the exam.\n\n"
+        embedBuilder.setTitle("✅ Reopening channels event")
+                .setDescription("Sending event to Sentinel to open the channels!\n\n"
                         + "**Exam:** " + exam.getCourseName() + "\n"
                         + "**End Date:** " + exam.getEndDate() + "\n\n"
-                        + "Text and voice channels are now available again for all users.")
+                        + "Please wait 1-2 minutes for Sentinel to unlock all channels!")
                 .setColor(Color.GREEN)
                 .setFooter("Thank you for your patience during the exam period!");
 
         return embedBuilder.build();
     }
 
-    public static MessageEmbed getMessageForUsersWithoutRoles() {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+    public static MessageEmbed getEventExecutedSuccessfully() {
+        return new EmbedBuilder()
+                .setTitle("✅ EVENT EXECUTED SUCCESSFULLY!")
+                .build();
+    }
 
-        embedBuilder.setTitle("🚨 Напомняне за роля: Изберете вашия програмен език!");
-        embedBuilder.setDescription(
-                "Изглежда, че все още не сте избрали програмен език! 🔍\n\n" +
-                        "За да отключите напълно сървъра и да получите достъп до канали, посветени на вашите интереси, моля, изберете вашия програмен език от падащото меню по-долу. 🌐\n\n" +
-                        "Това ще ви помогне да се свържете с други учащи и разработчици във вашата област!\n"
-        );
-
-        embedBuilder.addField("👨‍💻 Защо трябва да изберете език:",
-                "Като изберете вашия програмен език, ще получите достъп до специфични канали и ресурси, съобразени с вашите интереси и експертиза!",
-                false);
-
-        embedBuilder.addField("❗ Важно:",
-                "Ако не сте сигурни, винаги можете да изберете повече езици по-късно, като се върнете към това меню!",
-                false);
-
-        embedBuilder.setColor(Color.YELLOW);
-        embedBuilder.setFooter("Благодарим ви, че сте част от нашата общност! Очакваме с нетърпение да ви видим наоколо!");
-
-        return embedBuilder.build();
+    public static MessageEmbed getEventExecutedUnSuccessfully() {
+        return new EmbedBuilder()
+                .setTitle("🚨 SOMETHING WENT WRONG!!!")
+                .build();
     }
 
     public static MessageEmbed getBotInfoMessage() {
@@ -235,15 +208,6 @@ public class EmbeddedMessages {
                 .setThumbnail("https://cdn.discordapp.com/avatars/1280446385061105686/3161a22831ee1f47b11c795d7ada8dba.png");
 
         return embed.build();
-    }
-
-    public static MessageEmbed getInvitationGettingRoleLogMessage(int numberOfInvitedUsers) {
-        return new EmbedBuilder()
-                .setTitle("Role Assignment Invitation")
-                .setDescription(String.format("A total of **%d** users have been invited to select a role.", numberOfInvitedUsers))
-                .setColor(Color.GREEN)
-                .build();
-
     }
 
     public static void createExamAddedMessage(Guild guild, String channelId, Exam exam) {
