@@ -200,7 +200,7 @@ public class ExamListener extends ListenerAdapter {
         return checked.get();
     }
 
-    private static @NotNull Exam getDummyExam() {
+    public static @NotNull Exam getDummyExam() {
         return new Exam(1L, "No course", "No course", "No course");
     }
 

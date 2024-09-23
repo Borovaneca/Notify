@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static bg.notify.listeners.ExamListener.getDummyExam;
 import static bg.notify.utils.EmbeddedMessages.updateManagerMessage;
 
 @Component
@@ -78,7 +79,7 @@ public class RestartListener extends ListenerAdapter {
         } else {
             closestUpcomingExam = examRepository.findClosestUpcomingTestExams();
         }
-        return closestUpcomingExam;
+        return closestUpcomingExam.isEmpty() ? Optional.of(getDummyExam()) : closestUpcomingExam;
     }
 
     private boolean checkIfChannelsAreLocked(Guild guild, List<String> textCategories, String voiceCategory) {
