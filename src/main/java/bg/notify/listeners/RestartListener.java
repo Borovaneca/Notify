@@ -54,7 +54,7 @@ public class RestartListener extends ListenerAdapter {
 
             Guild guild = event.getGuild();
             String guildId = guild.getId();
-            Optional<Exam> closestUpcomingBasicsExam = examRepository.findClosestUpcomingBasicsExam();
+            Optional<Exam> closestUpcomingExam = getExam(guild);
             Optional<ManagerStatus> managerStatus = managerStatusRepository.findByGuildId(guildId);
             List<String> textCategories = guildProperties.getTextChannelsToLock().get(guildId);
             String voiceCategory = guildProperties.getVoiceChannelsToLock().get(guildId);
@@ -64,9 +64,21 @@ public class RestartListener extends ListenerAdapter {
                 managerStatus.get().setCurrentStatus(ChannelStatus.LOCKED);
                 managerStatusRepository.save(managerStatus.get());
             }
-            updateManagerMessage(guild, closestUpcomingBasicsExam.get(), managerStatusRepository, managerProperties);
+            updateManagerMessage(guild, closestUpcomingExam.get(), managerStatusRepository, managerProperties);
             event.getHook().sendMessage("Channels are checked and the closest exam has been updated! If there is No exam, please insert one from Insert E.").setEphemeral(true).queue();
         }
+    }
+
+    private Optional<Exam> getExam(Guild guild) {
+        Optional<Exam> closestUpcomingExam;
+        if (guild.getId().equals(guildProperties.getGuildIds().get(GuildNames.BASICS))) {
+            closestUpcomingExam = examRepository.findClosestUpcomingBasicsExam();
+        } else if (guild.getId().equals(guildProperties.getGuildIds().get(GuildNames.FUNDAMENTALS))) {
+            closestUpcomingExam = examRepository.findClosestUpcomingFundamentalsExam();
+        } else {
+            closestUpcomingExam = examRepository.findClosestUpcomingTestExams();
+        }
+        return closestUpcomingExam;
     }
 
     private boolean checkIfChannelsAreLocked(Guild guild, List<String> textCategories, String voiceCategory) {
