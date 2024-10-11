@@ -57,9 +57,8 @@ public class RestartListener extends ListenerAdapter {
             String guildId = guild.getId();
             Optional<Exam> closestUpcomingExam = getExam(guild);
             Optional<ManagerStatus> managerStatus = managerStatusRepository.findByGuildId(guildId);
-            List<String> textCategories = guildProperties.getTextChannelsToLock().get(guildId);
             String voiceCategory = guildProperties.getVoiceChannelsToLock().get(guildId);
-            boolean channelsIsLocked = checkIfChannelsAreLocked(guild, textCategories, voiceCategory);
+            boolean channelsIsLocked = checkIfChannelsAreLocked(guild, voiceCategory);
 
             if (channelsIsLocked && managerStatus.isPresent()) {
                 managerStatus.get().setCurrentStatus(ChannelStatus.LOCKED);
@@ -82,30 +81,13 @@ public class RestartListener extends ListenerAdapter {
         return closestUpcomingExam.isEmpty() ? Optional.of(getDummyExam()) : closestUpcomingExam;
     }
 
-    private boolean checkIfChannelsAreLocked(Guild guild, List<String> textCategories, String voiceCategory) {
+    private boolean checkIfChannelsAreLocked(Guild guild, String voiceCategory) {
         boolean voiceChannelClosed = false;
-        Role everyRole = guild.getPublicRole();
         if (guild.getCategoryById(voiceCategory) instanceof VoiceChannel voice) {
             if (voice.getUserLimit() == 1) {
                 voiceChannelClosed = true;
             }
         }
-
-        AtomicBoolean textChannelsClosed = new AtomicBoolean(false);
-
-        textCategories.forEach(textCategory -> {
-            Category category = guild.getCategoryById(textCategory);
-            if (category == null) return;
-            category.getChannels().forEach(channel -> {
-                if (channel.getType() == ChannelType.TEXT) {
-                    TextChannel textChannel = (TextChannel) channel;
-                    PermissionOverride permissionOverride = textChannel.getPermissionOverride(everyRole);
-                    if (permissionOverride != null && permissionOverride.getDenied().contains(Permission.MESSAGE_SEND)) {
-                        textChannelsClosed.set(true);
-                    }
-                }
-            });
-        });
-        return voiceChannelClosed || textChannelsClosed.get();
+        return voiceChannelClosed;
     }
 }
