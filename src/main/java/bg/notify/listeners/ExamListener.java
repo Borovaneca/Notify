@@ -159,6 +159,7 @@ public class ExamListener extends ListenerAdapter {
                     .setActionRow(
                             Button.primary("insert-exam", "Insert E."),
                             Button.secondary("view-exam", "View E."),
+                            Button.success("announce", "Announce"),
                             Button.primary("refresh-button", "🔄")
                     ).queue();
         });
@@ -173,6 +174,7 @@ public class ExamListener extends ListenerAdapter {
         message.setActionRow(
                 Button.primary("insert-exam", "Insert E."),
                 Button.secondary("view-exam", "View E."),
+                Button.success("announce", "Announce"),
                 Button.primary("refresh-button", "🔄")
         ).queue(sentMessage -> {
             defaultManagerStatus.setCommentId(sentMessage.getId());

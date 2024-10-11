@@ -147,6 +147,7 @@ public class EmbeddedMessages {
                             .setActionRow(
                                     net.dv8tion.jda.api.interactions.components.buttons.Button.primary("insert-exam", "Insert E."),
                                     Button.secondary("view-exam", "View E."),
+                                    Button.success("announce", "Announce"),
                                     Button.primary("refresh-button", "🔄")
                             )
                             .queue();
