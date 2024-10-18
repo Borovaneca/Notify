@@ -41,6 +41,11 @@ public class AnnounceListener extends ListenerAdapter {
 
         String message = event.getValue(ANNOUNCE_MESSAGE_ID).getAsString();
         TextChannel channel = event.getGuild().getTextChannelById(guildProperties.getAnnouncementChannels().get(event.getGuild().getId()));
-        channel.sendMessage("@everyone\n\n" + message).queue();
+        if (channel != null) {
+            channel.sendMessage("@everyone\n\n" + message).queue();
+            event.reply("Announce message sent!").setEphemeral(true).queue();
+        } else {
+            event.reply("Could not find the announcement channel!").setEphemeral(true).queue();
+        }
     }
 }

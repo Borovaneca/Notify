@@ -52,6 +52,9 @@ public class RestartListener extends ListenerAdapter {
             if (channelsIsLocked && managerStatus.isPresent()) {
                 managerStatus.get().setCurrentStatus(ChannelStatus.LOCKED);
                 managerStatusRepository.save(managerStatus.get());
+            } else {
+                managerStatus.get().setCurrentStatus(ChannelStatus.UNLOCKED);
+                managerStatusRepository.save(managerStatus.get());
             }
             updateManagerMessage(guild, closestUpcomingExam.get(), managerStatusRepository, managerProperties);
             event.getHook().sendMessage("Channels are checked and the closest exam has been updated! If there is No exam, please insert one from Insert E.").setEphemeral(true).queue();
