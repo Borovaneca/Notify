@@ -10,11 +10,10 @@ import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
 import bg.notify.services.EventService;
 import bg.notify.utils.EmbeddedMessages;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -27,10 +26,10 @@ import java.util.Optional;
 
 import static bg.notify.utils.EmbeddedMessages.updateManagerMessage;
 
+@Slf4j
 @Component
 public class StartExamScheduler {
 
-    private static final Logger log = LoggerFactory.getLogger(StartExamScheduler.class);
     private final ExamRepository examRepository;
     private final ManagerStatusRepository managerStatusRepository;
     private final EventService eventService;
@@ -48,7 +47,7 @@ public class StartExamScheduler {
         this.guildProperties = guildProperties;
     }
 
-    @Scheduled(cron = "0 0 9 * * ?")
+    @Scheduled(cron = "0 10 1 * * ?")
     public void checkExamDay() throws IOException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         String today = dateFormat.format(new Date());
@@ -58,8 +57,10 @@ public class StartExamScheduler {
 
         for (Exam exam : examsToday) {
             Guild guild;
+            log.info("Current day: " + dateFormat.format(new Date()) + " Current exam start date " + exam.getStartDate());
             if (exam.getCourseName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
 
+                log.info("Sending event to close the channels for Basics");
                 guild = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.BASICS));
                 proceed(exam, guild);
 
