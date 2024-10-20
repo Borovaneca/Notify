@@ -45,7 +45,7 @@ public class StartExamScheduler {
         this.guildProperties = guildProperties;
     }
 
-    @Scheduled(cron = "0 10 1 * * ?")
+    @Scheduled(cron = "0 25 1 * * ?")
     public void checkExamDay() throws IOException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         String today = dateFormat.format(new Date());

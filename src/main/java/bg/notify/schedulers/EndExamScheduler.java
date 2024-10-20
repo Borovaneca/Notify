@@ -46,7 +46,7 @@ public class EndExamScheduler {
         this.jda = jda;
     }
 
-    @Scheduled(cron = "0 59 23 * * ?")
+    @Scheduled(cron = "0 30 1 * * ?")
     public void unlockBasicsChannelsForCompletedExams() throws IOException {
         unlockChannelsForCompletedExams(GuildNames.BASICS, examRepository::findClosestUpcomingBasicsExam);
     }
