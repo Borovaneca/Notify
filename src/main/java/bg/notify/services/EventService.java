@@ -33,9 +33,9 @@ public class EventService {
                 .build();
 
         OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(2, TimeUnit.MINUTES)
+                .connectTimeout(40, TimeUnit.SECONDS)
+                .writeTimeout(40, TimeUnit.SECONDS)
+                .readTimeout(3, TimeUnit.MINUTES)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
