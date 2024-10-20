@@ -10,7 +10,6 @@ import bg.notify.repositories.ExamRepository;
 import bg.notify.repositories.ManagerStatusRepository;
 import bg.notify.services.EventService;
 import bg.notify.utils.EmbeddedMessages;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -26,7 +25,6 @@ import java.util.Optional;
 
 import static bg.notify.utils.EmbeddedMessages.updateManagerMessage;
 
-@Slf4j
 @Component
 public class StartExamScheduler {
 
@@ -57,10 +55,10 @@ public class StartExamScheduler {
 
         for (Exam exam : examsToday) {
             Guild guild;
-            log.info("Current day: " + dateFormat.format(new Date()) + " Current exam start date " + exam.getStartDate());
+            System.out.println(("Current day: " + dateFormat.format(new Date()) + " Current exam start date " + exam.getStartDate()));
             if (exam.getCourseName().contains(guildProperties.getGuildNames().get(GuildNames.BASICS))) {
 
-                log.info("Sending event to close the channels for Basics");
+                System.out.println(("Sending event to close the channels for Basics"));
                 guild = jda.getGuildById(guildProperties.getGuildIds().get(GuildNames.BASICS));
                 proceed(exam, guild);
 
